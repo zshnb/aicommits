@@ -1,0 +1,48 @@
+# .goreleaser.yaml
+version: 2
+
+project_name: aicommits
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    # 这里很关键：将 git tag 的版本号注入到 cmd 包的变量中
+    ldflags:
+      - -s -w
+      - -X aicommits/cmd.version={{.Version}}
+      - -X aicommits/cmd.commit={{.Commit}}
+      - -X aicommits/cmd.date={{.Date}}
+
+archives:
+  - format: tar.gz
+    # Windows 使用 zip
+    format_overrides:
+      - goos: windows
+        format: zip
+    # 压缩包内的名称格式
+    name_template: >-
+      {{ .ProjectName }}_{{ .Os }}_{{ .Arch }}
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ .Tag }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
