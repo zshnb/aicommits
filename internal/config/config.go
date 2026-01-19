@@ -10,11 +10,12 @@ import (
 
 // Config 结构体定义了我们的配置项
 type Config struct {
-	Provider string `mapstructure:"provider"` // 新增: openai, deepseek, ollama
-	APIKey   string `mapstructure:"api_key"`
-	Model    string `mapstructure:"model"`
-	BaseURL  string `mapstructure:"base_url"`
-	Language string `mapstructure:"language"` // 新增: cn, en
+	Provider        string `mapstructure:"provider"` // 新增: openai, deepseek, ollama
+	APIKey          string `mapstructure:"api_key"`
+	Model           string `mapstructure:"model"`
+	BaseURL         string `mapstructure:"base_url"`
+	Language        string `mapstructure:"language"` // 新增: cn, en
+	WithDescription bool   `mapstructure:"with_description"`
 }
 
 // init 初始化 Viper 配置
@@ -76,6 +77,7 @@ func Save(cfg *Config) error {
 	viper.Set("model", cfg.Model)
 	viper.Set("base_url", cfg.BaseURL)
 	viper.Set("language", cfg.Language)
+	viper.Set("with_description", cfg.WithDescription)
 
 	// 确保文件存在
 	if err := viper.ReadInConfig(); err != nil {

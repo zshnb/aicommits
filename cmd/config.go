@@ -11,7 +11,7 @@ import (
 
 var configCmd = &cobra.Command{
 	Use:   "config",
-	Short: "配置工具 (交互式)",
+	Short: "Config",
 	Run: func(cmd *cobra.Command, args []string) {
 		interactiveConfig()
 	},
@@ -27,11 +27,12 @@ func interactiveConfig() {
 
 	// 定义表单绑定的变量
 	var (
-		provider = currentCfg.Provider
-		apiKey   = currentCfg.APIKey
-		model    = currentCfg.Model
-		baseURL  = currentCfg.BaseURL
-		language = currentCfg.Language
+		provider        = currentCfg.Provider
+		apiKey          = currentCfg.APIKey
+		model           = currentCfg.Model
+		baseURL         = currentCfg.BaseURL
+		language        = currentCfg.Language
+		withDescription = currentCfg.WithDescription
 	)
 
 	// 如果是第一次配置，设置一些默认值
@@ -91,21 +92,16 @@ func interactiveConfig() {
 	// 3. 第二步：填写详细信息
 	// 根据是否需要 API Key 动态调整表单
 	formFields := []huh.Field{
-		huh.NewInput().
-			Title("API Endpoint (Base URL)").
-			Value(&baseURL),
-
-		huh.NewInput().
-			Title("模型名称 (Model)").
-			Value(&model),
-
 		huh.NewSelect[string]().
 			Title("提交日志语言").
 			Options(
-				huh.NewOption("中文 (Chinese)", "cn"),
+				huh.NewOption("中文", "cn"),
 				huh.NewOption("English", "en"),
 			).
 			Value(&language),
+		huh.NewConfirm().
+			Title("是否生成详细描述?").
+			Value(&withDescription),
 	}
 
 	// Ollama 通常不需要 API Key，其他需要
@@ -114,8 +110,7 @@ func interactiveConfig() {
 		apiKeyField := huh.NewInput().
 			Title("API Key").
 			Value(&apiKey).
-			EchoMode(huh.EchoModePassword). // 密码掩码模式
-			Description("DeepSeek 或 OpenAI 的密钥")
+			EchoMode(huh.EchoModePassword)
 
 		// 插入到切片头部
 		formFields = append([]huh.Field{apiKeyField}, formFields...)

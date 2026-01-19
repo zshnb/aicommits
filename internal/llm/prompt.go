@@ -4,36 +4,55 @@ import "fmt"
 
 // PromptOptions 定义构建提示词所需的参数
 type PromptOptions struct {
-	Language string // "cn" 或 "en"
-	Diff     string // Git diff 内容
+	Language        string // "cn" 或 "en"
+	Diff            string // Git diff 内容
+	WithDescription bool
+	WithAppendix    bool
 }
 
 const (
-	systemPromptTpl = `You are an expert developer and git specialist.
+	systemPromptTpl = `
+<role>
+You are an expert developer and git specialist.
+</role>
+<goal>
 Your task is to generate a concise and standardized git commit message based on the provided code changes (diff).
+</goal>
+<context>
+please follow below type definition
+- build: Used for modifying the project build system, such as changing dependencies, external interfaces, or upgrading Node versions.
+- chore: Used for modifying non-business code, such as changing build processes or tool configurations.
+- ci: Used for modifying the Continuous Integration process, such as changing Travis, Jenkins, or other workflow configurations.
+- docs: Used for modifying documentation, such as changing README files or API documentation.
+- style: Used for modifying code style, such as adjusting indentation, spaces, blank lines, etc.
+- refactor: Used for code refactoring, such as modifying code structure, variable names, or function names without changing functional logic.
+- perf: Used for performance optimization, such as improving code performance or reducing memory usage.
+</context>
+<restriction>
+- Use the Conventional Commits format: <type>[optional scope]: <subject>
+- The subject line must be less than 50 characters.
+- Do NOT include markdown blocks (like ''' or code fences). Just return the raw message.
+%s
+</restriction>
+`
 
-Format Requirements:
-1. Use the Conventional Commits format: <type>: <subject>
-2. The subject line must be less than 50 characters.
-3. Leave a blank line after the subject.
-4. Provide a detailed description body (wrapping at 72 chars) if the changes are complex.
-5. Do NOT include markdown blocks (like ''' or code fences). Just return the raw message.
-6. %s`
-
-	langInstructionCN = "The commit message MUST be written in Simplified Chinese (简体中文)."
-	langInstructionEN = "The commit message MUST be written in English."
+	withDescriptionPrompt = "- Provide a detailed description body around 3 - 5 lines, each line must be less than 72 char. Leave a blank line after the subject."
+	langInstructionCN     = "- The commit message MUST be written in Simplified Chinese (简体中文)."
+	langInstructionEN     = "- The commit message MUST be written in English."
 )
 
-// ConstructMessages 构建发送给 LLM 的消息列表
 func ConstructMessages(opts PromptOptions) []Message {
-	// 1. 确定语言指令
-	langInstruction := langInstructionEN
+	moreInstruction := langInstructionEN
 	if opts.Language == "cn" {
-		langInstruction = langInstructionCN
+		moreInstruction = langInstructionCN
+	}
+
+	if opts.WithDescription {
+		moreInstruction += "\n" + withDescriptionPrompt
 	}
 
 	// 2. 组装 System Prompt
-	finalSystemPrompt := fmt.Sprintf(systemPromptTpl, langInstruction)
+	finalSystemPrompt := fmt.Sprintf(systemPromptTpl, moreInstruction)
 
 	// 3. 返回消息结构
 	return []Message{

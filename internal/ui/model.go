@@ -129,8 +129,6 @@ func (m Model) View() string {
 	return ""
 }
 
-// --- 后台任务 (Commands) ---
-
 // 定义消息类型
 type generatedMsg string
 type errMsg error

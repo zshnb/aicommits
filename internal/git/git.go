@@ -1,6 +1,7 @@
 package git
 
 import (
+	"fmt"
 	"os/exec"
 	"strings"
 )
@@ -17,4 +18,14 @@ func GetStagedDiff() (string, error) {
 	}
 
 	return strings.TrimSpace(string(output)), nil
+}
+
+func Commit(msg string) {
+	commitCmd := exec.Command("git", "commit", "-m", msg)
+	if out, err := commitCmd.CombinedOutput(); err != nil {
+		fmt.Printf("❌ 提交失败:\n%s\n", string(out))
+	} else {
+		fmt.Println("✅ 提交成功!")
+		fmt.Println(string(out))
+	}
 }

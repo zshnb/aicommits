@@ -7,7 +7,6 @@ import (
 	"aicommits/internal/ui" // 引入 UI 包
 	"context"
 	"fmt"
-	"os/exec"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -48,10 +47,11 @@ var rootCmd = &cobra.Command{
 		// 2. 初始化 LLM Client
 		// 这里为了演示方便，配置写死，之后可以用 Viper 做配置文件
 		client := llm.NewProvider(llm.ProviderConfig{
-			BaseURL:  cfg.BaseURL,
-			APIKey:   cfg.APIKey,
-			Model:    cfg.Model,
-			Language: cfg.Language, // 将语言偏好传进去
+			BaseURL:         cfg.BaseURL,
+			APIKey:          cfg.APIKey,
+			Model:           cfg.Model,
+			Language:        cfg.Language,
+			WithDescription: cfg.WithDescription,
 		}) // 3. 启动 UI 程序
 		// 创建一个带有超时的 Context
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -76,15 +76,7 @@ var rootCmd = &cobra.Command{
 
 		// 如果用户确认了提交
 		if m.Confirmed && m.Msg != "" {
-			// 执行 git commit -m "..."
-			fmt.Println("\n🚀 正在提交代码...")
-			commitCmd := exec.Command("git", "commit", "-m", m.Msg)
-			if out, err := commitCmd.CombinedOutput(); err != nil {
-				fmt.Printf("❌ 提交失败:\n%s\n", string(out))
-			} else {
-				fmt.Println("✅ 提交成功!")
-				fmt.Println(string(out))
-			}
+			git.Commit(m.Msg)
 		} else {
 			fmt.Println("\n🚫 已取消提交")
 		}
