@@ -77,7 +77,7 @@ func interactiveConfig() {
 			baseURL = "https://api.openai.com/v1"
 		}
 		if model == "" {
-			model = "gpt-3.5-turbo"
+			model = "gpt-5-nano"
 		}
 	case "ollama":
 		if baseURL == "" {
@@ -188,8 +188,8 @@ var listCmd = &cobra.Command{
 
 func init() {
 	// 将子命令注册到 config 命令
-	configCmd.AddCommand(setCmd)
-	configCmd.AddCommand(listCmd)
+	rootCmd.AddCommand(setCmd)
+	rootCmd.AddCommand(listCmd)
 
 	// 将 config 命令注册到根命令
 	rootCmd.AddCommand(configCmd)

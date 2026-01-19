@@ -47,13 +47,12 @@ var rootCmd = &cobra.Command{
 
 		// 2. 初始化 LLM Client
 		// 这里为了演示方便，配置写死，之后可以用 Viper 做配置文件
-		client := llm.NewOpenAIClient(llm.OpenAIConfig{
-			APIKey:  cfg.APIKey,
-			Model:   "gpt-5-nano",
-			Timeout: 30 * time.Second,
-		})
-
-		// 3. 启动 UI 程序
+		client := llm.NewProvider(llm.ProviderConfig{
+			BaseURL:  cfg.BaseURL,
+			APIKey:   cfg.APIKey,
+			Model:    cfg.Model,
+			Language: cfg.Language, // 将语言偏好传进去
+		}) // 3. 启动 UI 程序
 		// 创建一个带有超时的 Context
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()

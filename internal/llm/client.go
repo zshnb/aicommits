@@ -8,3 +8,24 @@ type Client interface {
 	// GenerateCommitMessage 根据代码差异生成提交信息
 	GenerateCommitMessage(ctx context.Context, diff string) (string, error)
 }
+
+type Message struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+type ChatRequest struct {
+	Model       string    `json:"model"`
+	Messages    []Message `json:"messages"`
+	Temperature float64   `json:"temperature,omitempty"`
+	Stream      bool      `json:"stream,omitempty"`
+}
+
+type ChatResponse struct {
+	Choices []struct {
+		Message Message `json:"message"`
+	} `json:"choices"`
+	Error *struct {
+		Message string `json:"message"`
+	} `json:"error,omitempty"`
+}
