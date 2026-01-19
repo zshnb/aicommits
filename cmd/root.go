@@ -2,11 +2,15 @@ package cmd
 
 import (
 	"aicommits/internal/git"
-	"aicommits/internal/llm" // 引入新包
+	"aicommits/internal/llm"
+	"aicommits/internal/ui" // 引入 UI 包
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
+	"time"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 )
 
@@ -14,17 +18,13 @@ var rootCmd = &cobra.Command{
 	Use:   "aicommits",
 	Short: "使用AI编写Git提交日志",
 	Run: func(cmd *cobra.Command, args []string) {
-		// 1. 检查环境变量 (为了MVP快速验证)
 		apiKey := os.Getenv("OPENAI_API_KEY")
 		if apiKey == "" {
-			fmt.Println("❌ 错误: 未设置 OPENAI_API_KEY 环境变量")
-			fmt.Println("提示: export OPENAI_API_KEY='sk-...'")
+			fmt.Println("❌ 请设置 OPENAI_API_KEY 环境变量")
 			return
 		}
 
-		fmt.Println("🚀 正在分析代码变更...")
-
-		// 2. 获取 Diff
+		// 1. 获取 Diff
 		diff, err := git.GetStagedDiff()
 		if err != nil {
 			fmt.Printf("❌ Git错误: %v\n", err)
@@ -35,27 +35,50 @@ var rootCmd = &cobra.Command{
 			return
 		}
 
-		// 3. 初始化 LLM 客户端
-		// 这里演示如何配置为 DeepSeek (只需要改 BaseURL 和 Model)
-		// 如果你想用官方 OpenAI，就把 BaseURL 留空，Model 改为 "gpt-3.5-turbo"
+		// 2. 初始化 LLM Client
+		// 这里为了演示方便，配置写死，之后可以用 Viper 做配置文件
 		client := llm.NewOpenAIClient(llm.OpenAIConfig{
-			APIKey: apiKey,
-			Model:  "gpt-5-nano", // 示例：DeepSeek 模型
+			APIKey:  apiKey,
+			Model:   "gpt-5-nano",
+			Timeout: 30 * time.Second,
 		})
 
-		fmt.Println("⏳ 正在请求 AI 生成日志...")
+		// 3. 启动 UI 程序
+		// 创建一个带有超时的 Context
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
 
-		// 4. 调用接口
-		msg, err := client.GenerateCommitMessage(context.Background(), diff)
+		model := ui.NewModel(ctx, client, diff)
+		p := tea.NewProgram(model)
+
+		// 运行 UI，它会阻塞直到用户按 Enter/Esc/Ctrl+C
+		finalModel, err := p.Run()
 		if err != nil {
-			fmt.Printf("❌ AI生成失败: %v\n", err)
+			fmt.Printf("UI 错误: %v\n", err)
 			return
 		}
 
-		// 5. 输出结果
-		fmt.Println("\n------------------------------------------------")
-		fmt.Println(msg)
-		fmt.Println("------------------------------------------------")
+		// 4. 处理最终结果
+		// 类型断言取回我们的 Model 数据
+		m, ok := finalModel.(ui.Model)
+		if !ok {
+			return
+		}
+
+		// 如果用户确认了提交
+		if m.Confirmed && m.Msg != "" {
+			// 执行 git commit -m "..."
+			fmt.Println("\n🚀 正在提交代码...")
+			commitCmd := exec.Command("git", "commit", "-m", m.Msg)
+			if out, err := commitCmd.CombinedOutput(); err != nil {
+				fmt.Printf("❌ 提交失败:\n%s\n", string(out))
+			} else {
+				fmt.Println("✅ 提交成功!")
+				fmt.Println(string(out))
+			}
+		} else {
+			fmt.Println("\n🚫 已取消提交")
+		}
 	},
 }
 
