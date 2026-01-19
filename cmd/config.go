@@ -182,10 +182,8 @@ var listCmd = &cobra.Command{
 }
 
 func init() {
-	// 将子命令注册到 config 命令
 	rootCmd.AddCommand(setCmd)
 	rootCmd.AddCommand(listCmd)
-
-	// 将 config 命令注册到根命令
 	rootCmd.AddCommand(configCmd)
+	rootCmd.Flags().BoolVarP(&shouldStageAll, "add", "a", false, "Stage all files before commit")
 }

@@ -6,10 +6,7 @@ import (
 	"strings"
 )
 
-// GetStagedDiff 获取暂存区的差异
 func GetStagedDiff() (string, error) {
-	// 执行 git diff --cached --diff-algorithm=minimal
-	// minimal算法能产生更紧凑的diff，节省Token
 	cmd := exec.Command("git", "diff", "--cached", "--diff-algorithm=minimal")
 	output, err := cmd.Output()
 
@@ -25,7 +22,11 @@ func Commit(msg string) {
 	if out, err := commitCmd.CombinedOutput(); err != nil {
 		fmt.Printf("❌ 提交失败:\n%s\n", string(out))
 	} else {
-		fmt.Println("✅ 提交成功!")
 		fmt.Println(string(out))
 	}
+}
+
+func StageAll() error {
+	cmd := exec.Command("git", "add", ".")
+	return cmd.Run()
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var shouldStageAll bool
 var rootCmd = &cobra.Command{
 	Use:   "aicommits",
 	Short: "使用AI编写Git提交日志",
@@ -28,9 +29,15 @@ var rootCmd = &cobra.Command{
 		if cfg.APIKey == "" {
 			fmt.Println("❌ 未检测到 API Key。")
 			fmt.Println("请先运行配置命令:")
-			fmt.Println("  aicommits config set api_key <your_key>")
-			fmt.Println("  aicommits config set base_url https://api.deepseek.com (如果使用 DeepSeek)")
+			fmt.Println("  aicommits config")
 			return
+		}
+
+		if shouldStageAll {
+			if err := git.StageAll(); err != nil {
+				fmt.Printf("❌ 无法将变更加入暂存区: %v\n", err)
+				return
+			}
 		}
 
 		// 1. 获取 Diff

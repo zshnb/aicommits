@@ -105,7 +105,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) View() string {
 	switch m.state {
 	case stateLoading:
-		return fmt.Sprintf("\n %s 正在思考 Git 提交日志...\n\n", m.spinner.View())
+		return fmt.Sprintf("\n %s 正在生成 Git 提交日志...\n\n", m.spinner.View())
 
 	case stateReview:
 		// 使用 lipgloss 渲染漂亮的边框
