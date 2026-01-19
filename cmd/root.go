@@ -1,12 +1,12 @@
 package cmd
 
 import (
+	"aicommits/internal/config"
 	"aicommits/internal/git"
 	"aicommits/internal/llm"
 	"aicommits/internal/ui" // 引入 UI 包
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
 	"time"
 
@@ -18,9 +18,19 @@ var rootCmd = &cobra.Command{
 	Use:   "aicommits",
 	Short: "使用AI编写Git提交日志",
 	Run: func(cmd *cobra.Command, args []string) {
-		apiKey := os.Getenv("OPENAI_API_KEY")
-		if apiKey == "" {
-			fmt.Println("❌ 请设置 OPENAI_API_KEY 环境变量")
+		// 1. 加载配置
+		cfg, err := config.Load()
+		if err != nil {
+			fmt.Printf("❌ 配置加载失败: %v\n", err)
+			return
+		}
+
+		// 检查必要参数
+		if cfg.APIKey == "" {
+			fmt.Println("❌ 未检测到 API Key。")
+			fmt.Println("请先运行配置命令:")
+			fmt.Println("  aicommits config set api_key <your_key>")
+			fmt.Println("  aicommits config set base_url https://api.deepseek.com (如果使用 DeepSeek)")
 			return
 		}
 
@@ -38,7 +48,7 @@ var rootCmd = &cobra.Command{
 		// 2. 初始化 LLM Client
 		// 这里为了演示方便，配置写死，之后可以用 Viper 做配置文件
 		client := llm.NewOpenAIClient(llm.OpenAIConfig{
-			APIKey:  apiKey,
+			APIKey:  cfg.APIKey,
 			Model:   "gpt-5-nano",
 			Timeout: 30 * time.Second,
 		})
