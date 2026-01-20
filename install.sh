@@ -60,6 +60,14 @@ esac
 FILE_NAME="${REPO_NAME}_${FILE_OS}_${FILE_ARCH}.tar.gz"
 DOWNLOAD_URL="https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/latest/download/${FILE_NAME}"
 
+INSTALL_PATH="/usr/local/bin/$BIN_NAME"
+if [ -f "$INSTALL_PATH" ]; then
+    echo "🔄 检测到已安装版本，准备升级..."
+    IS_UPGRADE=true
+else
+    IS_UPGRADE=false
+fi
+
 echo "⬇️  正在下载 ${DOWNLOAD_URL}..."
 tmp_dir=$(mktemp -d)
 curl -sL "$DOWNLOAD_URL" -o "$tmp_dir/$FILE_NAME"
@@ -70,12 +78,16 @@ tar -xzf "$tmp_dir/$FILE_NAME" -C "$tmp_dir"
 echo "🚀 安装到 /usr/local/bin..."
 # 检查是否有写权限
 if [ -w "/usr/local/bin" ]; then
-    mv "$tmp_dir/$BIN_NAME" "/usr/local/bin/$BIN_NAME"
+    mv "$tmp_dir/$BIN_NAME" "$INSTALL_PATH"
 else
-    sudo mv "$tmp_dir/$BIN_NAME" "/usr/local/bin/$BIN_NAME"
+    sudo mv "$tmp_dir/$BIN_NAME" "$INSTALL_PATH"
 fi
 
-chmod +x "/usr/local/bin/$BIN_NAME"
+chmod +x "$INSTALL_PATH"
 rm -rf "$tmp_dir"
 
-echo "✅ 安装成功！请运行 '$BIN_NAME config' 进行初始化。"
+if [ "$IS_UPGRADE" = true ]; then
+    echo "✅ 升级成功！"
+else
+    echo "✅ 安装成功！请运行 '$BIN_NAME config' 进行初始化。"
+fi

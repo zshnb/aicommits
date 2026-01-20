@@ -30,15 +30,15 @@ please follow below type definition
 </context>
 <restriction>
 - Use the Conventional Commits format: <type>[optional scope]: <subject>
-- The subject line must be less than 50 characters.
+- The subject line **MUST** be less than 100 characters.
 - Do NOT include markdown blocks (like ''' or code fences). Just return the raw message.
 %s
 </restriction>
 `
 
-	withDescriptionPrompt = "- Provide a detailed description body around 3 - 5 lines, each line must be less than 72 char. Leave a blank line after the subject."
-	langInstructionCN     = "- The commit message MUST be written in Simplified Chinese (简体中文)."
-	langInstructionEN     = "- The commit message MUST be written in English."
+	withDescriptionPrompt = "- Provide a detailed description body around 3 - 5 lines, each line **MUST** be less than 72 char. Leave a blank line after the subject."
+	langInstructionCN     = "- The commit message **MUST** be written in Simplified Chinese (简体中文)."
+	langInstructionEN     = "- The commit message **MUST** be written in English."
 )
 
 func ConstructMessages(opts PromptOptions) []Message {
