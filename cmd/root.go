@@ -54,11 +54,12 @@ var rootCmd = &cobra.Command{
 		// 2. 初始化 LLM Client
 		// 这里为了演示方便，配置写死，之后可以用 Viper 做配置文件
 		client := llm.NewProvider(llm.ProviderConfig{
-			BaseURL:         cfg.BaseURL,
-			APIKey:          cfg.APIKey,
-			Model:           cfg.Model,
-			Language:        cfg.Language,
-			WithDescription: cfg.WithDescription,
+			BaseURL:               cfg.BaseURL,
+			APIKey:                cfg.APIKey,
+			Model:                 cfg.Model,
+			Language:              cfg.Language,
+			WithDescription:       cfg.WithDescription,
+			SubjectSeparateSymbol: cfg.SubjectSeparateSymbol,
 		}) // 3. 启动 UI 程序
 		// 创建一个带有超时的 Context
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

@@ -27,12 +27,13 @@ func interactiveConfig() {
 
 	// 定义表单绑定的变量
 	var (
-		provider        = currentCfg.Provider
-		apiKey          = currentCfg.APIKey
-		model           = currentCfg.Model
-		baseURL         = currentCfg.BaseURL
-		language        = currentCfg.Language
-		withDescription = currentCfg.WithDescription
+		provider              = currentCfg.Provider
+		apiKey                = currentCfg.APIKey
+		model                 = currentCfg.Model
+		baseURL               = currentCfg.BaseURL
+		language              = currentCfg.Language
+		withDescription       = currentCfg.WithDescription
+		subjectSeparateSymbol = currentCfg.SubjectSeparateSymbol
 	)
 
 	// 如果是第一次配置，设置一些默认值
@@ -41,6 +42,9 @@ func interactiveConfig() {
 	}
 	if provider == "" {
 		provider = "deepseek"
+	}
+	if subjectSeparateSymbol == "" {
+		subjectSeparateSymbol = ","
 	}
 
 	// 2. 第一步：选择提供商
@@ -89,8 +93,6 @@ func interactiveConfig() {
 		}
 	}
 
-	// 3. 第二步：填写详细信息
-	// 根据是否需要 API Key 动态调整表单
 	formFields := []huh.Field{
 		huh.NewSelect[string]().
 			Title("提交日志语言").
@@ -102,6 +104,9 @@ func interactiveConfig() {
 		huh.NewConfirm().
 			Title("是否生成详细描述?").
 			Value(&withDescription),
+		huh.NewInput().
+			Title("分割符").
+			Value(&subjectSeparateSymbol),
 	}
 
 	// Ollama 通常不需要 API Key，其他需要
@@ -127,11 +132,12 @@ func interactiveConfig() {
 
 	// 4. 保存配置
 	newConfig := &config.Config{
-		Provider: provider,
-		APIKey:   apiKey,
-		BaseURL:  baseURL,
-		Model:    model,
-		Language: language,
+		Provider:              provider,
+		APIKey:                apiKey,
+		BaseURL:               baseURL,
+		Model:                 model,
+		Language:              language,
+		SubjectSeparateSymbol: subjectSeparateSymbol,
 	}
 
 	if err := config.Save(newConfig); err != nil {
@@ -152,13 +158,14 @@ var setCmd = &cobra.Command{
 
 		// 简单的校验
 		validKeys := map[string]bool{
-			"api_key":  true,
-			"model":    true,
-			"base_url": true,
+			"api_key":                 true,
+			"model":                   true,
+			"base_url":                true,
+			"subject_separate_symbol": true,
 		}
 
 		if !validKeys[key] {
-			fmt.Printf("❌ 无效的配置项: %s\n仅支持: api_key, model, base_url\n", key)
+			fmt.Printf("❌ 无效的配置项: %s\n仅支持: api_key, model, base_url, subject_separate_symbol\n", key)
 			return
 		}
 

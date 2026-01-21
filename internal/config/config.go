@@ -10,12 +10,13 @@ import (
 
 // Config 结构体定义了我们的配置项
 type Config struct {
-	Provider        string `mapstructure:"provider"` // 新增: openai, deepseek, ollama
-	APIKey          string `mapstructure:"api_key"`
-	Model           string `mapstructure:"model"`
-	BaseURL         string `mapstructure:"base_url"`
-	Language        string `mapstructure:"language"` // 新增: cn, en
-	WithDescription bool   `mapstructure:"with_description"`
+	Provider              string `mapstructure:"provider"`
+	APIKey                string `mapstructure:"api_key"`
+	Model                 string `mapstructure:"model"`
+	BaseURL               string `mapstructure:"base_url"`
+	Language              string `mapstructure:"language"`
+	WithDescription       bool   `mapstructure:"with_description"`
+	SubjectSeparateSymbol string `mapstructure:"subject_separate_symbol"`
 }
 
 // init 初始化 Viper 配置
@@ -78,6 +79,7 @@ func Save(cfg *Config) error {
 	viper.Set("base_url", cfg.BaseURL)
 	viper.Set("language", cfg.Language)
 	viper.Set("with_description", cfg.WithDescription)
+	viper.Set("subject_separate_symbol", cfg.SubjectSeparateSymbol)
 
 	// 确保文件存在
 	if err := viper.ReadInConfig(); err != nil {
@@ -91,7 +93,6 @@ func Save(cfg *Config) error {
 	return viper.WriteConfig()
 }
 
-// Get 获取所有配置的打印视图（隐藏 Key）
 func GetPrintable() string {
 	key := viper.GetString("api_key")
 	if len(key) > 8 {
@@ -104,8 +105,9 @@ func GetPrintable() string {
 
 	return fmt.Sprintf(`
 Current Configuration:
-  Base URL: %s
+  Provider: %s
   Model:    %s
   API Key:  %s
-`, viper.GetString("base_url"), viper.GetString("model"), key)
+  Subject Separate Symbol: %s
+`, viper.GetString("provider"), viper.GetString("model"), key, viper.GetString("subject_separate_symbol"))
 }

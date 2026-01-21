@@ -4,10 +4,10 @@ import "fmt"
 
 // PromptOptions 定义构建提示词所需的参数
 type PromptOptions struct {
-	Language        string // "cn" 或 "en"
-	Diff            string // Git diff 内容
-	WithDescription bool
-	WithAppendix    bool
+	Language              string // "cn" 或 "en"
+	Diff                  string // Git diff 内容
+	WithDescription       bool
+	SubjectSeparateSymbol string
 }
 
 const (
@@ -31,6 +31,7 @@ please follow below type definition
 <restriction>
 - Use the Conventional Commits format: <type>[optional scope]: <subject>
 - The subject line **MUST** be less than 100 characters.
+- If subject contains more than one topic, use %s to separate them.
 - Do NOT include markdown blocks (like ''' or code fences). Just return the raw message.
 %s
 </restriction>
@@ -52,7 +53,7 @@ func ConstructMessages(opts PromptOptions) []Message {
 	}
 
 	// 2. 组装 System Prompt
-	finalSystemPrompt := fmt.Sprintf(systemPromptTpl, moreInstruction)
+	finalSystemPrompt := fmt.Sprintf(systemPromptTpl, opts.SubjectSeparateSymbol, moreInstruction)
 
 	// 3. 返回消息结构
 	return []Message{

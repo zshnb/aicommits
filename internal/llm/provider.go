@@ -14,12 +14,13 @@ import (
 // ProviderConfig 定义初始化 Provider 所需的配置
 // 这些字段直接对应 config 包中的内容
 type ProviderConfig struct {
-	BaseURL         string
-	APIKey          string
-	Model           string
-	Language        string // 用于 Prompt 构建
-	Timeout         time.Duration
-	WithDescription bool
+	BaseURL               string
+	APIKey                string
+	Model                 string
+	Language              string // 用于 Prompt 构建
+	Timeout               time.Duration
+	WithDescription       bool
+	SubjectSeparateSymbol string
 }
 
 // genericProvider 是通用的 OpenAI 兼容协议实现
@@ -46,13 +47,13 @@ func NewProvider(cfg ProviderConfig) Client {
 	}
 }
 
-// GenerateCommitMessage 实现 Client 接口
 func (p *genericProvider) GenerateCommitMessage(ctx context.Context, diff string) (string, error) {
 	// 1. 利用 prompt.go 构建消息
 	messages := ConstructMessages(PromptOptions{
-		Language:        p.cfg.Language,
-		Diff:            diff,
-		WithDescription: p.cfg.WithDescription,
+		Language:              p.cfg.Language,
+		Diff:                  diff,
+		WithDescription:       p.cfg.WithDescription,
+		SubjectSeparateSymbol: p.cfg.SubjectSeparateSymbol,
 	})
 
 	// 2. 构建请求 Payload
