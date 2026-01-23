@@ -17,6 +17,13 @@ var configCmd = &cobra.Command{
 	},
 }
 
+var providerModels = map[string][]string{
+	"deepseek": {"deepseek-chat", "deepseek-reasoner"},
+	"openai":   {"gpt-5-nano", "gpt-5-mini", "gpt-5.1", "gpt-4o"},
+	"grok":     {"grok-4-1-fast-non-reasoning", "grok-4-1-fast-reasoning", "grok-code-fast-1"}, // 常用本地模型
+	"claude":   {"claude-sonnet-4-5", "claude-haiku-4-5", "claude-opus-4-5"},                   // 常用本地模型
+}
+
 // interactiveConfig 启动交互式表单
 func interactiveConfig() {
 	// 1. 读取现有配置作为默认值
@@ -31,6 +38,7 @@ func interactiveConfig() {
 		apiKey                = currentCfg.APIKey
 		model                 = currentCfg.Model
 		baseURL               = currentCfg.BaseURL
+		path                  = currentCfg.Path
 		language              = currentCfg.Language
 		withDescription       = currentCfg.WithDescription
 		subjectSeparateSymbol = currentCfg.SubjectSeparateSymbol
@@ -56,8 +64,8 @@ func interactiveConfig() {
 				Options(
 					huh.NewOption("DeepSeek", "deepseek"),
 					huh.NewOption("OpenAI", "openai"),
-					huh.NewOption("Ollama (本地)", "ollama"),
-					huh.NewOption("自定义", "custom"),
+					huh.NewOption("Grok", "grok"),
+					huh.NewOption("Claude", "claude"),
 				).
 				Value(&provider),
 		),
@@ -68,32 +76,60 @@ func interactiveConfig() {
 		return
 	}
 
-	// 根据提供商自动填充默认值 (如果用户原本没填过)
 	switch provider {
 	case "deepseek":
-		if baseURL == "" {
-			baseURL = "https://api.deepseek.com"
-		}
-		if model == "" {
-			model = "deepseek-chat"
-		}
+		baseURL = "https://api.deepseek.com"
+		path = "/chat/completions"
 	case "openai":
-		if baseURL == "" {
-			baseURL = "https://api.openai.com/v1"
-		}
-		if model == "" {
-			model = "gpt-5-nano"
-		}
-	case "ollama":
-		if baseURL == "" {
-			baseURL = "http://localhost:11434/v1"
-		}
-		if model == "" {
-			model = "llama3"
+		baseURL = "https://api.openai.com"
+		path = "/v1/chat/completions"
+	case "grok":
+		baseURL = "https://api.x.ai"
+		path = "/v1/responses"
+	case "claude":
+		baseURL = "https://api.anthropic.com"
+		path = "/v1/messages"
+	}
+
+	// 准备模型选项
+	var modelOptions []huh.Option[string]
+	if models, ok := providerModels[provider]; ok {
+		for _, m := range models {
+			val := m
+			modelOptions = append(modelOptions, huh.NewOption(m, val))
 		}
 	}
 
+	modelOptions = append(modelOptions, huh.NewOption("其他模型", "manual"))
+
+	if provider != "custom" {
+		var selectedModel string
+		err = huh.NewForm(
+			huh.NewGroup(
+				huh.NewSelect[string]().
+					Title(fmt.Sprintf("选择 %s 模型", provider)).
+					Options(modelOptions...).
+					Value(&selectedModel),
+			),
+		).Run()
+		if err != nil {
+			return
+		}
+
+		if selectedModel != "manual" {
+			model = selectedModel
+		} else {
+			model = ""
+		}
+	} else {
+		model = ""
+	}
+
 	formFields := []huh.Field{
+		huh.NewInput().
+			Title("API Key").
+			Value(&apiKey).
+			EchoMode(huh.EchoModePassword),
 		huh.NewSelect[string]().
 			Title("提交日志语言").
 			Options(
@@ -109,16 +145,11 @@ func interactiveConfig() {
 			Value(&subjectSeparateSymbol),
 	}
 
-	// Ollama 通常不需要 API Key，其他需要
-	if provider != "ollama" {
-		// 在 BaseURL 之前插入 API Key 输入框
-		apiKeyField := huh.NewInput().
-			Title("API Key").
-			Value(&apiKey).
-			EchoMode(huh.EchoModePassword)
-
-		// 插入到切片头部
-		formFields = append([]huh.Field{apiKeyField}, formFields...)
+	if model == "" {
+		formFields = append(formFields, huh.NewInput().
+			Title("请输入模型名称").
+			Placeholder("e.g. gpt-4-turbo").
+			Value(&model))
 	}
 
 	err = huh.NewForm(
@@ -135,6 +166,7 @@ func interactiveConfig() {
 		Provider:              provider,
 		APIKey:                apiKey,
 		BaseURL:               baseURL,
+		Path:                  path,
 		Model:                 model,
 		Language:              language,
 		SubjectSeparateSymbol: subjectSeparateSymbol,

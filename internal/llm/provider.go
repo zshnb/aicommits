@@ -15,9 +15,10 @@ import (
 // 这些字段直接对应 config 包中的内容
 type ProviderConfig struct {
 	BaseURL               string
+	Path                  string
 	APIKey                string
 	Model                 string
-	Language              string // 用于 Prompt 构建
+	Language              string
 	Timeout               time.Duration
 	WithDescription       bool
 	SubjectSeparateSymbol string
@@ -67,21 +68,7 @@ func (p *genericProvider) GenerateCommitMessage(ctx context.Context, diff string
 		return "", fmt.Errorf("marshal request failed: %w", err)
 	}
 
-	// 3. 拼接 URL
-	// 假设 BaseURL 是 https://api.deepseek.com
-	// 我们需要请求 https://api.deepseek.com/chat/completions
-	// 如果用户配置带了 /v1，需要做防重叠处理，这里简单处理：
-	url := strings.TrimRight(p.cfg.BaseURL, "/")
-	if !strings.HasSuffix(url, "/chat/completions") {
-		// 简单的兼容性修补，通常 BaseURL 应该是 host/v1
-		if !strings.Contains(url, "/v1") && !strings.Contains(url, "/beta") {
-			// 有些本地部署可能是 /api/chat，这里假设标准 OpenAI 格式
-			url += "/v1"
-		}
-		url += "/chat/completions"
-	}
-
-	// 4. 发起 HTTP 请求
+	url := p.cfg.BaseURL + p.cfg.Path
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonBytes))
 	if err != nil {
 		return "", err

@@ -55,6 +55,7 @@ var rootCmd = &cobra.Command{
 		// 这里为了演示方便，配置写死，之后可以用 Viper 做配置文件
 		client := llm.NewProvider(llm.ProviderConfig{
 			BaseURL:               cfg.BaseURL,
+			Path:                  cfg.Path,
 			APIKey:                cfg.APIKey,
 			Model:                 cfg.Model,
 			Language:              cfg.Language,

@@ -14,6 +14,7 @@ type Config struct {
 	APIKey                string `mapstructure:"api_key"`
 	Model                 string `mapstructure:"model"`
 	BaseURL               string `mapstructure:"base_url"`
+	Path                  string `mapstructure:"path"`
 	Language              string `mapstructure:"language"`
 	WithDescription       bool   `mapstructure:"with_description"`
 	SubjectSeparateSymbol string `mapstructure:"subject_separate_symbol"`
@@ -33,12 +34,12 @@ func init() {
 // Load 读取配置
 func Load() (*Config, error) {
 	if err := viper.ReadInConfig(); err != nil {
-		// 如果是“未找到配置文件”错误，返回空配置即可，不报错
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			return &Config{
 				// 设置默认值
 				Model:   "gpt-5-nano",
 				BaseURL: "https://api.openai.com/v1",
+				Path:    "/chat/completions",
 			}, nil
 		}
 		return nil, err
@@ -77,6 +78,7 @@ func Save(cfg *Config) error {
 	viper.Set("api_key", cfg.APIKey)
 	viper.Set("model", cfg.Model)
 	viper.Set("base_url", cfg.BaseURL)
+	viper.Set("path", cfg.Path)
 	viper.Set("language", cfg.Language)
 	viper.Set("with_description", cfg.WithDescription)
 	viper.Set("subject_separate_symbol", cfg.SubjectSeparateSymbol)
